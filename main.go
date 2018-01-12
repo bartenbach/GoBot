@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"math/rand"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -14,7 +15,7 @@ import (
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 
-var botName = "golangbot"
+var botName = "UncleJim"
 var serv = flag.String("server", "chat.freenode.net:6667", "hostname and port for irc server to connect to")
 var nick = flag.String("nick", botName, "nickname for the bot")
 
@@ -50,7 +51,7 @@ var LogMessage = hbot.Trigger{
 	},
 	func(irc *hbot.Bot, m *hbot.Message) bool {
 		writeMessageToDatabase(m.Content)
-		//checkRandomResposeTime()
+		checkRandomResponseTime(irc, m)
 		return true
 	},
 }
@@ -65,6 +66,14 @@ var MarkovChain = hbot.Trigger{
 		irc.Reply(m, reply)
 		return false
 	},
+}
+
+func checkRandomResponseTime(irc *hbot.Bot, m *hbot.Message) {
+	number := rand.Intn(100)
+	if number < 2 {
+		reply := getMarkovText()
+		irc.Reply(m, reply)
+	}
 }
 
 func getMarkovText() string {
