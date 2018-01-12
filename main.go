@@ -45,22 +45,13 @@ func main() {
 // LogMessage logs all messages from chat to the database for chaining later.
 var LogMessage = hbot.Trigger{
 	func(bot *hbot.Bot, m *hbot.Message) bool {
-		return !strings.Contains(m.From, ".") && m.From != botName && m.From != "" && !strings.HasPrefix(m.Content, "-")
+		return !strings.Contains(m.From, ".") && m.From != botName && m.From != "" &&
+			!strings.HasPrefix(m.Content, "-") && !strings.HasPrefix(m.Content, "!") &&
+			m.From != "buttbutt" && !strings.HasPrefix(m.Content, "Quit:")
 	},
 	func(irc *hbot.Bot, m *hbot.Message) bool {
 		writeMessageToDatabase(m.Content)
 		return true
-	},
-}
-
-// SayInfoMessage is a test function.
-var SayInfoMessage = hbot.Trigger{
-	func(bot *hbot.Bot, m *hbot.Message) bool {
-		return m.Command == "PRIVMSG" && m.Content == "-test"
-	},
-	func(irc *hbot.Bot, m *hbot.Message) bool {
-		irc.Reply(m, "Tyler is a big faggot")
-		return false
 	},
 }
 

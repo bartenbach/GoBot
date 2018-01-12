@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Modified from original command-line program to a Markov package
+// by Blake Bartenbach
+
 /*
 Generating random text: a Markov chain algorithm
 
