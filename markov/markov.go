@@ -122,6 +122,6 @@ func DoMarkovChain(input string) string {
 
 	c := NewChain(2)                  // Initialize a new Chain.
 	c.Build(strings.NewReader(input)) // Build chains from standard input.
-	text := c.Generate(20)            // Generate text.
+	text := c.Generate(30)            // Generate text.
 	return text                       // returns text
 }

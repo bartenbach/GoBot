@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/proxa/GoBot/markov"
@@ -70,7 +71,14 @@ var MarkovChain = hbot.Trigger{
 
 func checkRandomResponseTime(irc *hbot.Bot, m *hbot.Message) {
 	number := rand.Intn(100)
-	if number < 2 {
+	if number <= 1 {
+		go func() {
+			sleeptime := rand.Intn(180)
+			time.Sleep(time.Duration(sleeptime) * time.Minute)
+			reply := getMarkovText()
+			irc.Reply(m, reply)
+		}()
+	} else if number < 2 {
 		reply := getMarkovText()
 		irc.Reply(m, reply)
 	}
@@ -99,13 +107,15 @@ func createTable() {
 func writeMessageToDatabase(msg string) {
 	db, err := sql.Open("mysql", "gobot:test@/gobot?charset=utf8")
 	checkErr(err)
-
-	stmt, err := db.Prepare("INSERT messages SET message=?")
-	checkErr(err)
-
-	res, err := stmt.Exec(msg)
-	fmt.Println(res)
-	checkErr(err)
+	if err != nil {
+		stmt, err := db.Prepare("INSERT messages SET message=?")
+		checkErr(err)
+		if err != nil {
+			res, err := stmt.Exec(msg)
+			fmt.Println(res)
+			checkErr(err)
+		}
+	}
 }
 
 func getMessageFromDatabase() string {
