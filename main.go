@@ -33,7 +33,6 @@ func main() {
 		panic(err)
 	}
 
-	irc.AddTrigger(SayInfoMessage)
 	irc.AddTrigger(LogMessage)
 	irc.AddTrigger(MarkovChain)
 	irc.Logger.SetHandler(log.StdoutHandler)
@@ -51,6 +50,7 @@ var LogMessage = hbot.Trigger{
 	},
 	func(irc *hbot.Bot, m *hbot.Message) bool {
 		writeMessageToDatabase(m.Content)
+		//checkRandomResposeTime()
 		return true
 	},
 }
@@ -69,9 +69,7 @@ var MarkovChain = hbot.Trigger{
 
 func getMarkovText() string {
 	data := getMessageFromDatabase()
-	fmt.Println("DATA: ", data)
 	result := markov.DoMarkovChain(data)
-	fmt.Println("RESULT: ", result)
 	return result
 }
 
@@ -127,6 +125,6 @@ func getMessageFromDatabase() string {
 
 func checkErr(err error) {
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 }
