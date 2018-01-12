@@ -95,10 +95,13 @@ func createTable() {
 	db, err := sql.Open("mysql", "gobot:test@/gobot?charset=utf8")
 	checkErr(err)
 
-	// create the table
+	// create the table creation string
 	createTable := string("CREATE TABLE IF NOT EXISTS `messages` (`message` VARCHAR(450) NOT NULL);")
+
+	// prepare, check for error, and defer close
 	stmt, err := db.Prepare(createTable)
 	checkErr(err)
+	defer stmt.Close()
 	res, err := stmt.Exec()
 	checkErr(err)
 	fmt.Println(res)
@@ -110,6 +113,7 @@ func writeMessageToDatabase(msg string) {
 	if err != nil {
 		stmt, err := db.Prepare("INSERT messages SET message=?")
 		checkErr(err)
+		defer stmt.Close()
 		if err != nil {
 			res, err := stmt.Exec(msg)
 			fmt.Println(res)
