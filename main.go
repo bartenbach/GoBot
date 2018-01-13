@@ -81,6 +81,7 @@ var MarkovChain = hbot.Trigger{
 func checkRandomResponseTime(irc *hbot.Bot, m *hbot.Message) {
 	number := rand.Intn(100)
 	if number <= 1 {
+		// spin off a new thread to randomly chat sometime in the next 3 hours
 		go func() {
 			sleeptime := rand.Intn(180)
 			time.Sleep(time.Duration(sleeptime) * time.Minute)
@@ -123,8 +124,11 @@ func writeMessageToDatabase(msg string) {
 	// open connection to database
 	db, err := sql.Open("mysql", "gobot:test@/gobot?charset=utf8")
 
+	// trim any beginning or trailing whitespace
+	trimmed := strings.TrimSpace(msg)
+
 	// replace all action text with /me
-	replaced := strings.Replace(msg, "ACTION", "/me", -1)
+	replaced := strings.Replace(trimmed, "ACTION", "/me", -1)
 
 	split := strings.Fields(replaced)
 	// if message is only one word (or none), don't bother adding it because it can't be chained
