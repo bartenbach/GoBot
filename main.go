@@ -95,7 +95,10 @@ func checkRandomResponseTime(irc *hbot.Bot, m *hbot.Message) {
 
 func getMarkovText() string {
 	data := getMessageFromDatabase()
-	result := markov.DoMarkovChain(data)
+	// randomize the length
+	length := rand.Intn(50)
+	length++
+	result := markov.DoMarkovChain(data, length)
 	return result
 }
 
@@ -117,16 +120,21 @@ func createTable() {
 }
 
 func writeMessageToDatabase(msg string) {
+	// open connection to database
 	db, err := sql.Open("mysql", "gobot:test@/gobot?charset=utf8")
-	split := strings.Fields(msg)
-	// if message is only one word, don't bother adding it because it can't be chained
+
+	// replace all action text with /me
+	replaced := strings.Replace(msg, "ACTION", "/me", -1)
+
+	split := strings.Fields(replaced)
+	// if message is only one word (or none), don't bother adding it because it can't be chained
 	if len(split) <= 1 {
 		return
 	}
 
 	// if message contains highlight, remove it
 	if highlightRegex.MatchString(split[0]) {
-		fmt.Println("Found highlight message: ", msg)
+		log.Debug("Found highlight message: ", string(replaced))
 		return
 	}
 
@@ -135,7 +143,7 @@ func writeMessageToDatabase(msg string) {
 		stmt, err := db.Prepare("INSERT messages SET message=?")
 		defer stmt.Close()
 		if err == nil {
-			res, err := stmt.Exec(msg)
+			res, err := stmt.Exec(replaced)
 			if err == nil {
 				fmt.Println("Result from database: ", res)
 			}

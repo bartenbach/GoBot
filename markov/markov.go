@@ -117,11 +117,11 @@ func (c *Chain) Generate(n int) string {
 }
 
 // DoMarkovChain runs the program and returns the result from the provided input.
-func DoMarkovChain(input string) string {
+func DoMarkovChain(input string, length int) string {
 	rand.Seed(time.Now().UnixNano()) // Seed the random number generator.
 
 	c := NewChain(2)                  // Initialize a new Chain.
 	c.Build(strings.NewReader(input)) // Build chains from standard input.
-	text := c.Generate(30)            // Generate text.
+	text := c.Generate(length)        // Generate text.
 	return text                       // returns text
 }
