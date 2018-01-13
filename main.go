@@ -17,9 +17,12 @@ import (
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 
+// name of the bot, this should probably go into a configuration file at some point.
 var botName = "UncleJim"
 var serv = flag.String("server", "chat.freenode.net:6667", "hostname and port for irc server to connect to")
 var nick = flag.String("nick", botName, "nickname for the bot")
+
+// this regex matches highlights, and avoids adding them to the database.
 var highlightRegex = regexp.MustCompile(`^[^\s]+:.*$`)
 
 func main() {
@@ -48,14 +51,13 @@ func main() {
 // LogMessage logs all messages from chat to the database for chaining later.
 var LogMessage = hbot.Trigger{
 	func(bot *hbot.Bot, m *hbot.Message) bool {
-		if !strings.Contains(m.From, ".") && m.From != botName && m.From != "" &&
+		/* This ignores server messages, the bot's messages, messages from null senders (happens apparently),
+		   messages that are commands to this bot, messages that are commands for my other bot, all messages
+		   from my other bot, quit messages, and more commands for my other bot.  Whew. */
+		return !strings.Contains(m.From, ".") && m.From != botName && m.From != "" &&
 			!strings.HasPrefix(m.Content, "-") && !strings.HasPrefix(m.Content, "!") &&
 			m.From != "buttbutt" && !strings.HasPrefix(m.Content, "Quit:") &&
-			!strings.HasPrefix(m.Content, "~") {
-			fmt.Println("Logging message")
-			return true
-		}
-		return false
+			!strings.HasPrefix(m.Content, "~")
 	},
 	func(irc *hbot.Bot, m *hbot.Message) bool {
 		writeMessageToDatabase(m.Content)
