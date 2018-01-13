@@ -150,7 +150,6 @@ func writeMessageToDatabase(msg string) {
 		} else {
 			fmt.Println("Error preparing SQL statement: ", err)
 		}
-		defer stmt.Close()
 	} else {
 		fmt.Println("Error connecting to mysql database: ", err)
 	}
