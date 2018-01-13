@@ -120,7 +120,7 @@ func writeMessageToDatabase(msg string) {
 	db, err := sql.Open("mysql", "gobot:test@/gobot?charset=utf8")
 	split := strings.Fields(msg)
 	// if message is only one word, don't bother adding it because it can't be chained
-	if len(split) == 1 {
+	if len(split) <= 1 {
 		return
 	}
 
