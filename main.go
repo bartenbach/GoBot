@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
+	"regexp"
 	"strings"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 var botName = "UncleJim"
 var serv = flag.String("server", "chat.freenode.net:6667", "hostname and port for irc server to connect to")
 var nick = flag.String("nick", botName, "nickname for the bot")
+var highlightRegex = regexp.MustCompile(`^[^\s]+:.*$`)
 
 func main() {
 	flag.Parse()
@@ -46,9 +48,14 @@ func main() {
 // LogMessage logs all messages from chat to the database for chaining later.
 var LogMessage = hbot.Trigger{
 	func(bot *hbot.Bot, m *hbot.Message) bool {
-		return !strings.Contains(m.From, ".") && m.From != botName && m.From != "" &&
+		if !strings.Contains(m.From, ".") && m.From != botName && m.From != "" &&
 			!strings.HasPrefix(m.Content, "-") && !strings.HasPrefix(m.Content, "!") &&
-			m.From != "buttbutt" && !strings.HasPrefix(m.Content, "Quit:")
+			m.From != "buttbutt" && !strings.HasPrefix(m.Content, "Quit:") &&
+			!strings.HasPrefix(m.Content, "~") {
+			fmt.Println("Logging message")
+			return true
+		}
+		return false
 	},
 	func(irc *hbot.Bot, m *hbot.Message) bool {
 		writeMessageToDatabase(m.Content)
@@ -109,16 +116,33 @@ func createTable() {
 
 func writeMessageToDatabase(msg string) {
 	db, err := sql.Open("mysql", "gobot:test@/gobot?charset=utf8")
-	checkErr(err)
-	if err != nil {
+	split := strings.Fields(msg)
+	// if message is only one word, don't bother adding it because it can't be chained
+	if len(split) == 1 {
+		return
+	}
+
+	// if message contains highlight, remove it
+	if highlightRegex.MatchString(split[0]) {
+		fmt.Println("Found highlight message: ", msg)
+		return
+	}
+
+	// add to database
+	if err == nil {
 		stmt, err := db.Prepare("INSERT messages SET message=?")
-		checkErr(err)
 		defer stmt.Close()
-		if err != nil {
+		if err == nil {
 			res, err := stmt.Exec(msg)
-			fmt.Println(res)
-			checkErr(err)
+			if err == nil {
+				fmt.Println("Result from database: ", res)
+			}
+		} else {
+			fmt.Println("Error preparing SQL statement: ", err)
 		}
+		defer stmt.Close()
+	} else {
+		fmt.Println("Error connecting to mysql database: ", err)
 	}
 }
 
