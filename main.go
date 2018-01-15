@@ -80,7 +80,7 @@ var MarkovChain = hbot.Trigger{
 
 func checkRandomResponseTime(irc *hbot.Bot, m *hbot.Message) {
 	number := rand.Intn(100)
-	if number <= 1 {
+	if number <= 5 {
 		// spin off a new thread to randomly chat sometime in the next 3 hours
 		go func() {
 			sleeptime := rand.Intn(180)
@@ -88,7 +88,7 @@ func checkRandomResponseTime(irc *hbot.Bot, m *hbot.Message) {
 			reply := getMarkovText()
 			irc.Reply(m, reply)
 		}()
-	} else if number < 2 {
+	} else if number < 6 {
 		reply := getMarkovText()
 		irc.Reply(m, reply)
 	}
