@@ -95,7 +95,7 @@ func checkRandomResponseTime(irc *hbot.Bot, m *hbot.Message) {
 }
 
 func getMarkovText() string {
-	data := getMessageFromDatabase()
+	data := getMessageFromDatabase() // problem: could be empty string
 	// randomize the length
 	length := rand.Intn(50)
 	length++
@@ -164,7 +164,8 @@ func getMessageFromDatabase() string {
 	checkErr(err)
 	rows, err := db.Query("SELECT * FROM messages ORDER BY RAND()")
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return ""
 	}
 	var tmp string
 	defer rows.Close()
