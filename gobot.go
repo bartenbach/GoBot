@@ -19,6 +19,7 @@ import (
 
 // name of the bot, this should probably go into a configuration file at some point.
 var botName = "UncleJim"
+var db sql.DB
 var serv = flag.String("server", "chat.freenode.net:6667", "hostname and port for irc server to connect to")
 var nick = flag.String("nick", botName, "nickname for the bot")
 
@@ -27,6 +28,8 @@ var highlightRegex = regexp.MustCompile(`^[^\s]+:.*$`)
 
 func main() {
 	flag.Parse()
+
+	// create database table and instantiate database object ONE TIME.
 	createTable()
 
 	hijackSession := func(bot *hbot.Bot) {
@@ -103,6 +106,7 @@ func getMarkovText() string {
 	return result
 }
 
+// this opens the connection to the database
 func createTable() {
 	// connect to sql database named 'gobot'
 	db, err := sql.Open("mysql", "gobot:test@/gobot?charset=utf8")
@@ -121,9 +125,6 @@ func createTable() {
 }
 
 func writeMessageToDatabase(msg string) {
-	// open connection to database
-	db, err := sql.Open("mysql", "gobot:test@/gobot?charset=utf8")
-
 	// trim any beginning or trailing whitespace
 	trimmed := strings.TrimSpace(msg)
 
@@ -143,6 +144,7 @@ func writeMessageToDatabase(msg string) {
 	}
 
 	// add to database
+	err := db.Ping()
 	if err == nil {
 		stmt, err := db.Prepare("INSERT messages SET message=?")
 		defer stmt.Close()
@@ -160,7 +162,7 @@ func writeMessageToDatabase(msg string) {
 }
 
 func getMessageFromDatabase() string {
-	db, err := sql.Open("mysql", "gobot:test@/gobot?charset=utf8")
+	err := db.Ping()
 	checkErr(err)
 	rows, err := db.Query("SELECT * FROM messages ORDER BY RAND()")
 	if err != nil {
