@@ -19,7 +19,6 @@ import (
 
 // name of the bot, this should probably go into a configuration file at some point.
 var botName = "UncleJim"
-var db *sql.DB
 var serv = flag.String("server", "chat.freenode.net:6667", "hostname and port for irc server to connect to")
 var nick = flag.String("nick", botName, "nickname for the bot")
 
@@ -28,13 +27,7 @@ var highlightRegex = regexp.MustCompile(`^[^\s]+:.*$`)
 
 func main() {
 	flag.Parse()
-
-	// connect to sql database named 'gobot'
-	db, err := sql.Open("mysql", "gobot:test@/gobot?charset=utf8")
-	checkErr(err)
-
-	// create database table and instantiate database object ONE TIME.
-	createTable(db)
+	createTable()
 
 	hijackSession := func(bot *hbot.Bot) {
 		bot.HijackSession = true
@@ -67,7 +60,7 @@ var LogMessage = hbot.Trigger{
 			!strings.HasPrefix(m.Content, "~")
 	},
 	func(irc *hbot.Bot, m *hbot.Message) bool {
-		writeMessageToDatabase(db, m.Content)
+		writeMessageToDatabase(m.Content)
 		checkRandomResponseTime(irc, m)
 		return true
 	},
@@ -79,7 +72,7 @@ var MarkovChain = hbot.Trigger{
 		return m.Command == "PRIVMSG" && m.Content == "-mkv"
 	},
 	func(irc *hbot.Bot, m *hbot.Message) bool {
-		reply := getMarkovText(db)
+		reply := getMarkovText()
 		irc.Reply(m, reply)
 		return false
 	},
@@ -92,17 +85,17 @@ func checkRandomResponseTime(irc *hbot.Bot, m *hbot.Message) {
 		go func() {
 			sleeptime := rand.Intn(180)
 			time.Sleep(time.Duration(sleeptime) * time.Minute)
-			reply := getMarkovText(db)
+			reply := getMarkovText()
 			irc.Reply(m, reply)
 		}()
 	} else if number < 6 {
-		reply := getMarkovText(db)
+		reply := getMarkovText()
 		irc.Reply(m, reply)
 	}
 }
 
-func getMarkovText(db *sql.DB) string {
-	data := getMessageFromDatabase(db) // problem: could be empty string
+func getMarkovText() string {
+	data := getMessageFromDatabase()
 	// randomize the length
 	length := rand.Intn(50)
 	length++
@@ -110,20 +103,30 @@ func getMarkovText(db *sql.DB) string {
 	return result
 }
 
-// this opens the connection to the database
-func createTable(db *sql.DB) {
+func createTable() {
+	// connect to sql database named 'gobot'
+	db, err := sql.Open("mysql", "gobot:test@/gobot?charset=utf8")
+	checkErr(err)
+	defer db.Close()
+
 	// create the table creation string
 	createTable := string("CREATE TABLE IF NOT EXISTS `messages` (`message` VARCHAR(450) NOT NULL);")
 
 	// prepare, check for error, and defer close
 	stmt, err := db.Prepare(createTable)
 	checkErr(err)
+	defer stmt.Close()
 	res, err := stmt.Exec()
 	checkErr(err)
 	fmt.Println(res)
 }
 
-func writeMessageToDatabase(db *sql.DB, msg string) {
+func writeMessageToDatabase(msg string) {
+	// open connection to database
+	db, err := sql.Open("mysql", "gobot:test@/gobot?charset=utf8")
+	checkErr(err)
+	defer db.Close()
+
 	// trim any beginning or trailing whitespace
 	trimmed := strings.TrimSpace(msg)
 
@@ -143,7 +146,6 @@ func writeMessageToDatabase(db *sql.DB, msg string) {
 	}
 
 	// add to database
-	err := db.Ping()
 	if err == nil {
 		stmt, err := db.Prepare("INSERT messages SET message=?")
 		defer stmt.Close()
@@ -160,9 +162,10 @@ func writeMessageToDatabase(db *sql.DB, msg string) {
 	}
 }
 
-func getMessageFromDatabase(db *sql.DB) string {
-	err := db.Ping()
+func getMessageFromDatabase() string {
+	db, err := sql.Open("mysql", "gobot:test@/gobot?charset=utf8")
 	checkErr(err)
+	defer db.Close()
 	rows, err := db.Query("SELECT * FROM messages ORDER BY RAND()")
 	if err != nil {
 		fmt.Println(err)
