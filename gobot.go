@@ -19,6 +19,7 @@ import (
 
 // name of the bot, this should probably go into a configuration file at some point.
 var botName = "UncleJim"
+var startTime time.Time // stores the uptime of the bot
 var serv = flag.String("server", "chat.freenode.net:6667", "hostname and port for irc server to connect to")
 var nick = flag.String("nick", botName, "nickname for the bot")
 
@@ -26,6 +27,9 @@ var nick = flag.String("nick", botName, "nickname for the bot")
 var highlightRegex = regexp.MustCompile(`^[^\s]+:.*$`)
 
 func main() {
+	// start the uptime timer
+	startTime = time.Now()
+
 	flag.Parse()
 	createTable()
 
@@ -42,6 +46,7 @@ func main() {
 
 	irc.AddTrigger(LogMessage)
 	irc.AddTrigger(MarkovChain)
+	irc.AddTrigger(UptimeCommand)
 	irc.Logger.SetHandler(log.StdoutHandler)
 
 	irc.Run()
@@ -74,6 +79,18 @@ var MarkovChain = hbot.Trigger{
 	func(irc *hbot.Bot, m *hbot.Message) bool {
 		reply := getMarkovText()
 		irc.Reply(m, reply)
+		return false
+	},
+}
+
+// UptimeCommand provides a way to get the bot's uptime.
+var UptimeCommand = hbot.Trigger{
+	func(bot *hbot.Bot, m *hbot.Message) bool {
+		return m.Command == "PRIVMSG" && m.Content == "-uptime"
+	},
+	func(irc *hbot.Bot, m *hbot.Message) bool {
+		var uptime time.Duration = time.Since(startTime)
+		irc.Reply(m, fmt.Sprintf("%s", uptime))
 		return false
 	},
 }

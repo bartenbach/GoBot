@@ -120,7 +120,8 @@ func (c *Chain) Generate(n int) string {
 func DoMarkovChain(input string, length int) string {
 	rand.Seed(time.Now().UnixNano()) // Seed the random number generator.
 
-	c := NewChain(2)                  // Initialize a new Chain.
+	// prefix length
+	c := NewChain(3)                  // Initialize a new Chain.
 	c.Build(strings.NewReader(input)) // Build chains from standard input.
 	text := c.Generate(length)        // Generate text.
 	return text                       // returns text
