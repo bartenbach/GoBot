@@ -58,11 +58,12 @@ var LogMessage = hbot.Trigger{
 	func(bot *hbot.Bot, m *hbot.Message) bool {
 		/* This ignores server messages, the bot's messages, messages from null senders (happens apparently),
 		   messages that are commands to this bot, messages that are commands for my other bot, all messages
-		   from my other bot, quit messages, and more commands for my other bot.  Whew. */
+		   from my other bot, quit messages, URLs, and more commands for my other bot.  Whew. */
 		return !strings.Contains(m.From, ".") && m.From != botName && m.From != "" &&
 			!strings.HasPrefix(m.Content, "-") && !strings.HasPrefix(m.Content, "!") &&
 			m.From != "buttbutt" && !strings.HasPrefix(m.Content, "Quit:") &&
-			!strings.HasPrefix(m.Content, "~")
+			!strings.HasPrefix(m.Content, "~") && !strings.Contains(m.Content, "https://") &&
+			!strings.Contains(m.Content, "http://")
 	},
 	func(irc *hbot.Bot, m *hbot.Message) bool {
 		writeMessageToDatabase(m.Content)
@@ -117,7 +118,7 @@ func getMarkovText() string {
 	length := rand.Intn(50)
 	length++
 	result := markov.DoMarkovChain(data, length)
-	return result
+	return strings.Replace(result, "\"", "", -1)
 }
 
 func createTable() {
