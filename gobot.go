@@ -98,14 +98,15 @@ var UptimeCommand = hbot.Trigger{
 
 func checkRandomResponseTime(irc *hbot.Bot, m *hbot.Message) {
 	number := rand.Intn(100)
-	if number <= 5 {
-		// spin off a new thread to randomly chat sometime in the next 3 hours
+	if number <= 1 {
+		// spin off a new thread to randomly chat sometime
 		go func() {
-			sleeptime := rand.Intn(180)
+			sleeptime := rand.Intn(60)
 			time.Sleep(time.Duration(sleeptime) * time.Minute)
 			reply := getMarkovText()
 			irc.Reply(m, reply)
 		}()
+		// this is unreachable and retarded but i'm too busy to fix this thanks to college.
 	} else if number < 6 {
 		reply := getMarkovText()
 		irc.Reply(m, reply)
@@ -115,10 +116,11 @@ func checkRandomResponseTime(irc *hbot.Bot, m *hbot.Message) {
 func getMarkovText() string {
 	data := getMessageFromDatabase()
 	// randomize the length
-	length := rand.Intn(50)
+	length := rand.Intn(20)
 	length++
 	result := markov.DoMarkovChain(data, length)
-	return strings.Replace(result, "\"", "", -1)
+	lowercase := strings.ToLower(result)
+	return strings.Replace(lowercase, "\"", "", -1)
 }
 
 func createTable() {
